@@ -11,10 +11,26 @@ const storage = multer.diskStorage({
     callback(null, 'images');
   },
   filename: (req, file, callback) => {
-    const name = file.originalname.split(' ').join('_');
+    const name = file.originalname.split(' ').join('_').split('.')[0];
     const extension = MIME_TYPES[file.mimetype];
-    callback(null, name + Date.now() + '.' + extension);
+    callback(null, name + '_' + Date.now() + '.' + extension);
   },
 });
 
-module.exports = multer({ storage: storage }).single('image');
+// Filtre des types autorisés
+const fileFilter = (req, file, cb) => {
+  if (MIME_TYPES[file.mimetype]) {
+    cb(null, true);
+  } else {
+    cb(new Error('Type de fichier non autorisé (jpg, jpeg, png uniquement)'), false);
+  }
+};
+
+// Taille maximale : 4 Mo 
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 4 * 1024 * 1024 },
+});
+
+module.exports = upload.single('image');
